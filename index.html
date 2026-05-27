@@ -726,27 +726,27 @@ function prefillConfig() {
 
 // ── DATE UTILS ────────────────────────────────────────────────────────────────
 function getWeekStart(d = new Date()) {
-  // Always work in local time to avoid UTC/SGT rollover
+  // Always returns YYYY-MM-DD string — never a Date to avoid UTC/SGT rollover
   let dateStr;
   if (typeof d === 'string' && d.length === 10) {
-    dateStr = d; // already YYYY-MM-DD
+    dateStr = d;
   } else {
-    const ld = new Date(d);
-    const y = ld.getFullYear();
-    const m = String(ld.getMonth()+1).padStart(2,'0');
-    const day2 = String(ld.getDate()).padStart(2,'0');
-    dateStr = `${y}-${m}-${day2}`;
+    const ld = (d instanceof Date) ? d : new Date(d);
+    dateStr = `${ld.getFullYear()}-${String(ld.getMonth()+1).padStart(2,'0')}-${String(ld.getDate()).padStart(2,'0')}`;
   }
   const [y, m, dd] = dateStr.split('-').map(Number);
-  const tmp = new Date(y, m-1, dd); // local midnight, no timezone shift
-  const dow = tmp.getDay(); // 0=Sun,1=Mon,...
-  tmp.setDate(tmp.getDate() - (dow === 0 ? 6 : dow - 1));
-  return tmp;
+  const tmp = new Date(y, m-1, dd); // local midnight — no timezone shift
+  const dow = tmp.getDay(); // 0=Sun
+  const monday = new Date(y, m-1, dd - (dow === 0 ? 6 : dow - 1));
+  return `${monday.getFullYear()}-${String(monday.getMonth()+1).padStart(2,'0')}-${String(monday.getDate()).padStart(2,'0')}`;
 }
 function isThisWeek(iso) {
-  const ws = getWeekStart(), we = new Date(ws);
-  we.setDate(ws.getDate() + 7);
-  const d = new Date(iso);
+  const wsStr = getWeekStart(); // YYYY-MM-DD string
+  const [wy, wm, wd] = wsStr.split('-').map(Number);
+  const ws = new Date(wy, wm-1, wd);
+  const we = new Date(wy, wm-1, wd + 7);
+  const ld = new Date(iso);
+  const d = new Date(ld.getFullYear(), ld.getMonth(), ld.getDate());
   return d >= ws && d < we;
 }
 function isToday(iso) {
@@ -851,8 +851,10 @@ function renderDailyPage() {
 
 // ── RENDER WEEKLY ─────────────────────────────────────────────────────────────
 function renderWeeklyPage() {
-  const ws = getWeekStart();
-  const we = new Date(ws); we.setDate(ws.getDate()+6);
+  const wsStr = getWeekStart();
+  const [_y,_m,_d] = wsStr.split('-').map(Number);
+  const ws = new Date(_y, _m-1, _d);
+  const we = new Date(_y, _m-1, _d+6);
   document.getElementById('weekLabel').textContent = `${fmtDate(ws)} – ${fmtDate(we)}`;
 
   const weekEntries = state.entries.filter(e => isThisWeek(e.ts));
@@ -878,7 +880,7 @@ function renderWeeklyPage() {
   const list = document.getElementById('dailyBreakdownList');
   let html = '';
   for (let i = 0; i < 7; i++) {
-    const d = new Date(ws); d.setDate(ws.getDate()+i);
+    const d = new Date(_y, _m-1, _d+i);
     const dayEntries = state.entries.filter(e => isSameDay(e.ts, d));
     const dayTotal   = dayEntries.reduce((s,e) => s+e.pts, 0);
     const dayCls     = dayTotal === 0 ? 'zero' : scoreClass(dayTotal, DAILY_MID, DAILY_HIGH);
@@ -927,7 +929,7 @@ async function syncToNotion(entry) {
   // Use local date to avoid UTC rollover (SGT = UTC+8)
   const _ets = new Date(entry.ts);
   const today = `${_ets.getFullYear()}-${String(_ets.getMonth()+1).padStart(2,'0')}-${String(_ets.getDate()).padStart(2,'0')}`;
-  const weekStart = getWeekStart(today).toISOString().split('T')[0];
+  const weekStart = getWeekStart(today);
   const weekRowId = await findOrCreateWeekRow(weekStart);
 
   const body = {
@@ -967,7 +969,7 @@ async function findOrCreateWeekRow(weekStart) {
     });
     const data = await res.json();
     if (data.results?.length > 0) return data.results[0].id;
-    const label = `W/C ${new Date(weekStart+'T12:00:00').toLocaleDateString('en-SG',{day:'numeric',month:'short',year:'numeric'})}`;
+    const label = `W/C ${new Date(weekStart.split('-').map(Number)[0], weekStart.split('-').map(Number)[1]-1, weekStart.split('-').map(Number)[2]).toLocaleDateString('en-SG',{day:'numeric',month:'short',year:'numeric'})}`;
     const cr = await fetch('https://wild-water-9953notion-proxy.natalie-151.workers.dev/v1/pages', {
       method:'POST',
       headers:{ 'Authorization':`Bearer ${state.notionApiKey}`, 'Content-Type':'application/json', 'Notion-Version':'2022-06-28' },
