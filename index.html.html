@@ -1,0 +1,957 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>neverdrift. — score</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,wght@0,300;0,400;0,500;0,700;1,400&family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --dark-green: #253819;
+    --charcoal:   #2B2B2B;
+    --off-white:  #FAF7F2;
+    --rust:       #C75B4C;
+    --gold:       #D4A873;
+    --muted:      #9a9690;
+    --border:     #e5e1da;
+    --white:      #ffffff;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+  body {
+    background: var(--off-white);
+    color: var(--charcoal);
+    font-family: 'DM Sans', sans-serif;
+    min-height: 100vh;
+    max-width: 480px;
+    margin: 0 auto;
+  }
+
+  /* ── TABS ── */
+  .tab-bar {
+    display: flex;
+    border-bottom: 1px solid var(--border);
+    background: var(--off-white);
+    position: sticky;
+    top: 0;
+    z-index: 50;
+  }
+  .tab {
+    flex: 1;
+    padding: 14px 0;
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    text-align: center;
+    cursor: pointer;
+    color: var(--muted);
+    border-bottom: 2px solid transparent;
+    transition: all 0.2s;
+    background: none;
+    border-top: none;
+    border-left: none;
+    border-right: none;
+    font-family: 'DM Sans', sans-serif;
+  }
+  .tab.active {
+    color: var(--dark-green);
+    border-bottom-color: var(--dark-green);
+  }
+
+  /* ── HEADER ── */
+  .header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 24px 20px 16px;
+    border-bottom: 1px solid var(--border);
+  }
+  .logo {
+    font-family: 'DM Serif Display', serif;
+    font-size: 20px;
+    color: var(--charcoal);
+    letter-spacing: -0.3px;
+  }
+  .logo em { font-style: italic; }
+  .logo-dot { color: var(--rust); }
+  .header-date {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    color: var(--muted);
+    letter-spacing: 0.05em;
+    text-align: right;
+    line-height: 1.5;
+  }
+
+  /* ── PAGES ── */
+  .page { display: none; padding: 20px 20px 100px; }
+  .page.active { display: block; }
+
+  /* ── SCORE HERO ── */
+  .score-hero { margin-bottom: 6px; }
+  .score-eyebrow {
+    font-size: 10px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 2px;
+    font-weight: 500;
+  }
+  .score-row {
+    display: flex;
+    align-items: baseline;
+    gap: 12px;
+    margin-bottom: 4px;
+  }
+  .score-number {
+    font-family: 'DM Serif Display', serif;
+    font-size: 80px;
+    line-height: 1;
+    letter-spacing: -3px;
+    transition: color 0.4s ease;
+  }
+  .score-number.coasting    { color: var(--rust); }
+  .score-number.maintenance { color: #9a7340; }
+  .score-number.growth      { color: var(--dark-green); }
+
+  .status-pill {
+    font-size: 10px;
+    font-weight: 500;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    padding: 4px 9px;
+    border-radius: 2px;
+    transition: all 0.3s;
+    align-self: center;
+    margin-bottom: 6px;
+  }
+  .status-pill.coasting    { background: rgba(199,91,76,0.1);   color: var(--rust); }
+  .status-pill.maintenance { background: rgba(212,168,115,0.15); color: #9a7340; }
+  .status-pill.growth      { background: rgba(37,56,25,0.1);    color: var(--dark-green); }
+
+  /* ── PROGRESS ── */
+  .progress-wrap { margin: 14px 0 20px; }
+  .progress-track {
+    height: 2px;
+    background: var(--border);
+    border-radius: 1px;
+    margin-bottom: 7px;
+    position: relative;
+  }
+  .progress-fill {
+    height: 100%;
+    border-radius: 1px;
+    transition: width 0.6s cubic-bezier(0.4,0,0.2,1), background 0.4s;
+    max-width: 100%;
+  }
+  .progress-fill.coasting    { background: var(--rust); }
+  .progress-fill.maintenance { background: var(--gold); }
+  .progress-fill.growth      { background: var(--dark-green); }
+  .progress-markers {
+    display: flex;
+    justify-content: space-between;
+  }
+  .marker {
+    font-size: 10px;
+    color: var(--muted);
+    font-family: 'DM Mono', monospace;
+  }
+  .marker b { color: var(--charcoal); font-weight: 500; }
+
+  /* ── BREAKDOWN ── */
+  .breakdown {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 6px;
+    margin-bottom: 24px;
+  }
+  .breakdown-5 {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 6px;
+    margin-bottom: 24px;
+  }
+  .cat-chip {
+    background: var(--white);
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    padding: 10px 12px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .cat-label {
+    font-size: 9px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--muted);
+    font-weight: 500;
+  }
+  .cat-pts {
+    font-family: 'DM Serif Display', serif;
+    font-size: 22px;
+    letter-spacing: -0.5px;
+  }
+  .cat-chip.sales    .cat-pts { color: var(--dark-green); }
+  .cat-chip.strategy .cat-pts { color: #7a5c2e; }
+  .cat-chip.delivery .cat-pts { color: #b05a1a; }
+  .cat-chip.content  .cat-pts { color: var(--rust); }
+  .cat-chip.ops      .cat-pts { color: var(--muted); }
+
+  /* ── DIVIDER ── */
+  .divider { height: 1px; background: var(--border); margin: 0 0 20px; }
+
+  /* ── SECTION LABEL ── */
+  .section-label {
+    font-size: 10px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 12px;
+    font-weight: 500;
+  }
+
+  /* ── ACTION BUTTONS ── */
+  .category-group { margin-bottom: 20px; }
+  .category-heading {
+    font-size: 9px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    font-weight: 600;
+    margin-bottom: 6px;
+    padding-left: 2px;
+  }
+  .category-heading.sales    { color: var(--dark-green); }
+  .category-heading.strategy { color: #7a5c2e; }
+  .category-heading.delivery { color: #b05a1a; }
+  .category-heading.content  { color: var(--rust); }
+  .category-heading.ops      { color: var(--muted); }
+
+  .actions-list { display: flex; flex-direction: column; gap: 5px; }
+
+  .action-btn {
+    background: var(--white);
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    padding: 11px 14px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    cursor: pointer;
+    transition: border-color 0.15s, transform 0.1s;
+    color: var(--charcoal);
+    text-align: left;
+    width: 100%;
+  }
+  .action-btn:hover  { border-color: #bbb8b2; }
+  .action-btn:active { transform: scale(0.99); }
+  .action-btn.flash  { animation: flashBtn 0.35s ease; }
+
+  @keyframes flashBtn {
+    0%  { background: var(--white); border-color: var(--border); }
+    40% { background: rgba(37,56,25,0.05); border-color: var(--dark-green); }
+    100%{ background: var(--white); border-color: var(--border); }
+  }
+
+  .action-left { display: flex; flex-direction: column; gap: 2px; flex: 1; padding-right: 12px; }
+  .action-name { font-size: 13px; font-weight: 400; letter-spacing: -0.01em; }
+  .action-desc { font-size: 11px; color: var(--muted); line-height: 1.4; }
+  .action-pts {
+    font-family: 'DM Serif Display', serif;
+    font-size: 24px;
+    letter-spacing: -1px;
+    color: var(--dark-green);
+    white-space: nowrap;
+  }
+
+  /* ── LOG ── */
+  .log-list { display: flex; flex-direction: column; }
+  .log-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 0;
+    border-bottom: 1px solid var(--border);
+    animation: slideIn 0.2s ease;
+  }
+  @keyframes slideIn {
+    from { opacity: 0; transform: translateY(-4px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  .log-item:last-child { border-bottom: none; }
+  .log-left { display: flex; flex-direction: column; gap: 2px; }
+  .log-action { font-size: 12px; color: var(--charcoal); }
+  .log-cat {
+    font-size: 9px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    font-weight: 500;
+    color: var(--muted);
+  }
+  .log-meta { display: flex; align-items: center; gap: 10px; }
+  .log-time { font-family: 'DM Mono', monospace; font-size: 10px; color: var(--muted); }
+  .log-pts  { font-family: 'DM Serif Display', serif; font-size: 20px; color: var(--dark-green); letter-spacing: -0.5px; }
+  .empty-log {
+    font-family: 'DM Serif Display', serif;
+    font-style: italic;
+    font-size: 13px;
+    color: var(--muted);
+    text-align: center;
+    padding: 28px 0;
+  }
+
+  /* ── WEEKLY VIEW ── */
+  .week-summary-block {
+    background: var(--white);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 16px;
+    margin-bottom: 20px;
+  }
+  .week-summary-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+  }
+  .week-summary-label {
+    font-size: 11px;
+    color: var(--muted);
+    font-weight: 500;
+    letter-spacing: 0.05em;
+  }
+  .week-summary-score {
+    font-family: 'DM Serif Display', serif;
+    font-size: 48px;
+    letter-spacing: -2px;
+    line-height: 1;
+    transition: color 0.4s;
+  }
+  .week-summary-score.coasting    { color: var(--rust); }
+  .week-summary-score.maintenance { color: #9a7340; }
+  .week-summary-score.growth      { color: var(--dark-green); }
+
+  .daily-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 9px 0;
+    border-bottom: 1px solid var(--border);
+    cursor: pointer;
+  }
+  .daily-row:last-child { border-bottom: none; }
+  .daily-row-left { display: flex; flex-direction: column; gap: 2px; }
+  .daily-day {
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--charcoal);
+  }
+  .daily-actions-count {
+    font-size: 10px;
+    color: var(--muted);
+    font-family: 'DM Mono', monospace;
+  }
+  .daily-right { display: flex; align-items: center; gap: 10px; }
+  .daily-bar-wrap {
+    width: 80px;
+    height: 3px;
+    background: var(--border);
+    border-radius: 2px;
+    overflow: hidden;
+  }
+  .daily-bar {
+    height: 100%;
+    border-radius: 2px;
+    transition: width 0.4s ease;
+  }
+  .daily-bar.coasting    { background: var(--rust); }
+  .daily-bar.maintenance { background: var(--gold); }
+  .daily-bar.growth      { background: var(--dark-green); }
+  .daily-score {
+    font-family: 'DM Serif Display', serif;
+    font-size: 18px;
+    letter-spacing: -0.5px;
+    width: 32px;
+    text-align: right;
+  }
+  .daily-score.coasting    { color: var(--rust); }
+  .daily-score.maintenance { color: #9a7340; }
+  .daily-score.growth      { color: var(--dark-green); }
+  .daily-score.zero        { color: var(--border); }
+
+  /* ── NOTION STATUS ── */
+  .notion-status {
+    font-size: 10px;
+    letter-spacing: 0.08em;
+    color: var(--muted);
+    text-align: center;
+    margin-top: 14px;
+    font-family: 'DM Mono', monospace;
+  }
+  .notion-status.syncing { color: #9a7340; }
+  .notion-status.synced  { color: var(--dark-green); }
+  .notion-status.error   { color: var(--rust); }
+
+  /* ── CONFIG ── */
+  .config-section { margin-top: 28px; padding-top: 24px; border-top: 1px solid var(--border); }
+  .config-row { display: flex; flex-direction: column; gap: 4px; margin-bottom: 12px; }
+  .config-label {
+    font-size: 10px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--muted);
+    font-weight: 500;
+  }
+  .config-input {
+    background: var(--white);
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    color: var(--charcoal);
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    padding: 9px 12px;
+    width: 100%;
+    outline: none;
+    transition: border-color 0.15s;
+  }
+  .config-input:focus { border-color: var(--charcoal); }
+  .save-btn {
+    background: var(--dark-green);
+    color: var(--off-white);
+    border: none;
+    border-radius: 3px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    padding: 13px 20px;
+    cursor: pointer;
+    width: 100%;
+    margin-top: 4px;
+    transition: background 0.15s;
+  }
+  .save-btn:hover { background: #1e2e14; }
+
+  /* ── TOAST ── */
+  .toast {
+    position: fixed;
+    bottom: 28px;
+    left: 50%;
+    transform: translateX(-50%) translateY(80px);
+    background: var(--dark-green);
+    color: var(--off-white);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 12px;
+    font-weight: 500;
+    padding: 11px 22px;
+    border-radius: 3px;
+    transition: transform 0.3s cubic-bezier(0.4,0,0.2,1);
+    white-space: nowrap;
+    z-index: 100;
+    letter-spacing: 0.02em;
+  }
+  .toast.show { transform: translateX(-50%) translateY(0); }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="logo">never<em>drift</em><span class="logo-dot">.</span></div>
+  <div class="header-date" id="headerDate">—</div>
+</div>
+
+<div class="tab-bar">
+  <button class="tab active" onclick="switchTab('daily')">Today</button>
+  <button class="tab" onclick="switchTab('weekly')">This Week</button>
+  <button class="tab" onclick="switchTab('settings')">Settings</button>
+</div>
+
+<!-- ════════════════════════════════════════════
+     DAILY PAGE
+════════════════════════════════════════════ -->
+<div class="page active" id="page-daily">
+
+  <div class="score-hero">
+    <div class="score-eyebrow">Daily Score</div>
+    <div class="score-row">
+      <div class="score-number coasting" id="dailyScore">0</div>
+      <div class="status-pill coasting" id="dailyPill">Coasting</div>
+    </div>
+  </div>
+
+  <div class="progress-wrap">
+    <div class="progress-track">
+      <div class="progress-fill coasting" id="dailyFill" style="width:0%"></div>
+    </div>
+    <div class="progress-markers">
+      <div class="marker"><b>0</b></div>
+      <div class="marker">Maintain <b>20</b></div>
+      <div class="marker">Grow <b>30</b></div>
+      <div class="marker"><b>50</b></div>
+    </div>
+  </div>
+
+  <div class="breakdown" id="dailyBreakdown">
+    <div class="cat-chip sales">
+      <span class="cat-label">Sales</span>
+      <span class="cat-pts" id="dSales">0</span>
+    </div>
+    <div class="cat-chip strategy">
+      <span class="cat-label">Strategy</span>
+      <span class="cat-pts" id="dStrategy">0</span>
+    </div>
+    <div class="cat-chip delivery">
+      <span class="cat-label">Delivery</span>
+      <span class="cat-pts" id="dDelivery">0</span>
+    </div>
+    <div class="cat-chip content">
+      <span class="cat-label">Content</span>
+      <span class="cat-pts" id="dContent">0</span>
+    </div>
+    <div class="cat-chip ops">
+      <span class="cat-label">Ops</span>
+      <span class="cat-pts" id="dOps">0</span>
+    </div>
+  </div>
+
+  <div class="divider"></div>
+  <div class="section-label">Log an action</div>
+  <div id="actionsGrid"></div>
+
+  <div class="divider"></div>
+  <div class="section-label">Today's log</div>
+  <div class="log-list" id="logList">
+    <div class="empty-log">Nothing logged yet today.</div>
+  </div>
+
+  <div class="notion-status" id="notionStatus">— not connected to Notion —</div>
+</div>
+
+<!-- ════════════════════════════════════════════
+     WEEKLY PAGE
+════════════════════════════════════════════ -->
+<div class="page" id="page-weekly">
+
+  <div class="week-summary-block">
+    <div class="week-summary-row">
+      <div>
+        <div class="score-eyebrow">Weekly Total</div>
+        <div class="week-summary-score coasting" id="weeklyScore">0</div>
+      </div>
+      <div style="text-align:right;">
+        <div class="status-pill coasting" id="weeklyPill" style="display:inline-block;">Coasting</div>
+        <div style="font-family:'DM Mono',monospace;font-size:10px;color:var(--muted);margin-top:6px;" id="weekLabel">—</div>
+      </div>
+    </div>
+    <div class="progress-track" style="margin-top:4px;margin-bottom:8px;">
+      <div class="progress-fill coasting" id="weeklyFill" style="width:0%"></div>
+    </div>
+    <div class="progress-markers">
+      <div class="marker"><b>0</b></div>
+      <div class="marker">Maintain <b>120</b></div>
+      <div class="marker">Grow <b>155</b></div>
+      <div class="marker"><b>200</b></div>
+    </div>
+  </div>
+
+  <div class="breakdown-5">
+    <div class="cat-chip sales">
+      <span class="cat-label">Sales</span>
+      <span class="cat-pts" id="wSales">0</span>
+    </div>
+    <div class="cat-chip strategy">
+      <span class="cat-label">Strategy</span>
+      <span class="cat-pts" id="wStrategy">0</span>
+    </div>
+    <div class="cat-chip delivery">
+      <span class="cat-label">Delivery</span>
+      <span class="cat-pts" id="wDelivery">0</span>
+    </div>
+    <div class="cat-chip content">
+      <span class="cat-label">Content</span>
+      <span class="cat-pts" id="wContent">0</span>
+    </div>
+    <div class="cat-chip ops">
+      <span class="cat-label">Ops</span>
+      <span class="cat-pts" id="wOps">0</span>
+    </div>
+  </div>
+
+  <div class="divider"></div>
+  <div class="section-label">Daily breakdown</div>
+  <div id="dailyBreakdownList"></div>
+
+</div>
+
+<!-- ════════════════════════════════════════════
+     SETTINGS PAGE
+════════════════════════════════════════════ -->
+<div class="page" id="page-settings">
+  <div class="section-label">Notion Config</div>
+  <div class="config-section" style="margin-top:0;padding-top:0;border-top:none;">
+    <div class="config-row">
+      <span class="config-label">API Key</span>
+      <input class="config-input" type="password" id="apiKeyInput" placeholder="secret_..." />
+    </div>
+    <div class="config-row">
+      <span class="config-label">Score Log Database ID</span>
+      <input class="config-input" type="text" id="dbIdInput" placeholder="e3ac5c508f90471bbac9643ce461d1d9" />
+    </div>
+    <div class="config-row">
+      <span class="config-label">Weekly Summary Database ID</span>
+      <input class="config-input" type="text" id="summaryDbIdInput" placeholder="cacdbe3696fa48d7b4c9e7efa841bbd7" />
+    </div>
+    <button class="save-btn" onclick="saveConfig()">Save Config</button>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ── ACTIONS ──────────────────────────────────────────────────────────────────
+const ACTIONS = [
+  // Sales
+  { name: "Drift Map session",       category: "Sales",    pts: 25, desc: "Deep-dive diagnostic with a prospect — your primary conversion tool" },
+  { name: "Proposal sent",           category: "Sales",    pts: 20, desc: "Formal package proposal sent to a lead" },
+  { name: "Renewal push",            category: "Sales",    pts: 15, desc: "Active outreach to a client approaching end of package" },
+  { name: "Follow-up on warm lead",  category: "Sales",    pts: 10, desc: "Following up on a lead who has shown interest" },
+  { name: "Referral ask",            category: "Sales",    pts: 10, desc: "Explicitly asking a client or contact for a referral" },
+  { name: "Re-engagement message",   category: "Sales",    pts: 10, desc: "Reaching out to a dormant or at-risk client" },
+  // Strategy
+  { name: "Strategy / planning",     category: "Strategy", pts: 15, desc: "Dedicated time thinking about business direction or offer" },
+  { name: "Website / brand work",    category: "Strategy", pts: 10, desc: "Any update that improves how Neverdrift shows up externally" },
+  { name: "Learning / research",     category: "Strategy", pts: 10, desc: "Reading, courses, or research directly relevant to your work" },
+  // Delivery
+  { name: "Client session",          category: "Delivery", pts: 10, desc: "A coaching session with an active client" },
+  // Content
+  { name: "Content post / bank",     category: "Content",  pts: 8,  desc: "Published or drafted content across any platform" },
+  { name: "Ven sync",                category: "Content",  pts: 5,  desc: "Alignment call with Ven on marketing or content output" },
+  // Ops
+  { name: "Client load review",      category: "Ops",      pts: 5,  desc: "Monday check-in on session capacity and client health" },
+  { name: "Replying to clients",     category: "Ops",      pts: 5,  desc: "Responding to client messages, check-ins, or questions" },
+  { name: "Onboarding / offboarding",category: "Ops",      pts: 5,  desc: "Admin for a new or departing client" },
+  { name: "Pipeline / CRM hygiene",  category: "Ops",      pts: 5,  desc: "Updating lead statuses, notes, follow-up dates" },
+];
+
+const CATEGORIES = ['Sales','Strategy','Delivery','Content','Ops'];
+const DAYS = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+
+// ── THRESHOLDS ────────────────────────────────────────────────────────────────
+const DAILY_MID  = 20, DAILY_HIGH  = 30,  DAILY_MAX  = 50;
+const WEEKLY_MID = 120, WEEKLY_HIGH = 155, WEEKLY_MAX = 200;
+
+// ── STATE ─────────────────────────────────────────────────────────────────────
+let state = {
+  entries: [],
+  notionApiKey: '',
+  scoreLogDbId:  'e3ac5c508f90471bbac9643ce461d1d9',
+  summaryDbId:   'cacdbe3696fa48d7b4c9e7efa841bbd7',
+};
+
+// ── INIT ──────────────────────────────────────────────────────────────────────
+function init() {
+  loadFromStorage();
+  pruneOldEntries();
+  renderHeader();
+  renderActions();
+  renderDailyPage();
+  renderWeeklyPage();
+  prefillConfig();
+}
+
+function loadFromStorage() {
+  try {
+    const s = localStorage.getItem('nd_tracker_v3');
+    if (s) Object.assign(state, JSON.parse(s));
+  } catch(e) {}
+}
+function saveToStorage() {
+  localStorage.setItem('nd_tracker_v3', JSON.stringify(state));
+}
+function prefillConfig() {
+  document.getElementById('apiKeyInput').value      = state.notionApiKey || '';
+  document.getElementById('dbIdInput').value        = state.scoreLogDbId || '';
+  document.getElementById('summaryDbIdInput').value = state.summaryDbId  || '';
+}
+
+// ── DATE UTILS ────────────────────────────────────────────────────────────────
+function getWeekStart(d = new Date()) {
+  const date = new Date(d);
+  const day = date.getDay();
+  date.setDate(date.getDate() - (day === 0 ? 6 : day - 1));
+  date.setHours(0,0,0,0);
+  return date;
+}
+function isThisWeek(iso) {
+  const ws = getWeekStart(), we = new Date(ws);
+  we.setDate(ws.getDate() + 7);
+  const d = new Date(iso);
+  return d >= ws && d < we;
+}
+function isToday(iso) {
+  return new Date(iso).toDateString() === new Date().toDateString();
+}
+function isSameDay(iso, date) {
+  return new Date(iso).toDateString() === date.toDateString();
+}
+function pruneOldEntries() {
+  const cutoff = new Date(); cutoff.setDate(cutoff.getDate() - 35);
+  state.entries = state.entries.filter(e => new Date(e.ts) > cutoff);
+  saveToStorage();
+}
+function fmtDate(d) {
+  return d.toLocaleDateString('en-SG', { day:'numeric', month:'short' });
+}
+
+// ── RENDER HEADER ─────────────────────────────────────────────────────────────
+function renderHeader() {
+  const now = new Date();
+  document.getElementById('headerDate').innerHTML =
+    now.toLocaleDateString('en-SG',{weekday:'short',day:'numeric',month:'short'}).toUpperCase();
+}
+
+// ── RENDER ACTIONS ────────────────────────────────────────────────────────────
+function renderActions() {
+  const grid = document.getElementById('actionsGrid');
+  let html = '';
+  CATEGORIES.forEach(cat => {
+    const catActions = ACTIONS.filter(a => a.category === cat);
+    html += `<div class="category-group">
+      <div class="category-heading ${cat.toLowerCase()}">${cat}</div>
+      <div class="actions-list">`;
+    catActions.forEach((a, _) => {
+      const i = ACTIONS.indexOf(a);
+      html += `<button class="action-btn" onclick="logAction(${i})" id="abtn-${i}">
+        <div class="action-left">
+          <span class="action-name">${a.name}</span>
+          <span class="action-desc">${a.desc}</span>
+        </div>
+        <span class="action-pts">+${a.pts}</span>
+      </button>`;
+    });
+    html += `</div></div>`;
+  });
+  grid.innerHTML = html;
+}
+
+// ── SCORE HELPERS ─────────────────────────────────────────────────────────────
+function scoreClass(score, mid, high) {
+  return score >= high ? 'growth' : score >= mid ? 'maintenance' : 'coasting';
+}
+function scoreLabel(score, mid, high) {
+  return score >= high ? 'Growth' : score >= mid ? 'Maintenance' : 'Coasting';
+}
+function catTotals(entries) {
+  const cats = { Sales:0, Strategy:0, Delivery:0, Content:0, Ops:0 };
+  entries.forEach(e => { if (cats[e.category] !== undefined) cats[e.category] += e.pts; });
+  return cats;
+}
+
+// ── RENDER DAILY ──────────────────────────────────────────────────────────────
+function renderDailyPage() {
+  const todayEntries = state.entries.filter(e => isToday(e.ts));
+  const total = todayEntries.reduce((s,e) => s + e.pts, 0);
+  const cats  = catTotals(todayEntries);
+  const cls   = scoreClass(total, DAILY_MID, DAILY_HIGH);
+  const lbl   = scoreLabel(total, DAILY_MID, DAILY_HIGH);
+
+  document.getElementById('dailyScore').className   = `score-number ${cls}`;
+  document.getElementById('dailyScore').textContent = total;
+  document.getElementById('dailyPill').className    = `status-pill ${cls}`;
+  document.getElementById('dailyPill').textContent  = lbl;
+  document.getElementById('dailyFill').className    = `progress-fill ${cls}`;
+  document.getElementById('dailyFill').style.width  = Math.min(100,(total/DAILY_MAX)*100)+'%';
+
+  document.getElementById('dSales').textContent    = cats.Sales;
+  document.getElementById('dStrategy').textContent = cats.Strategy;
+  document.getElementById('dDelivery').textContent = cats.Delivery;
+  document.getElementById('dContent').textContent  = cats.Content;
+  document.getElementById('dOps').textContent      = cats.Ops;
+
+  // Log
+  const list = document.getElementById('logList');
+  const sorted = [...todayEntries].sort((a,b) => new Date(b.ts)-new Date(a.ts));
+  if (!sorted.length) {
+    list.innerHTML = '<div class="empty-log">Nothing logged yet today.</div>';
+  } else {
+    list.innerHTML = sorted.map(e => `
+      <div class="log-item">
+        <div class="log-left">
+          <span class="log-action">${e.name}</span>
+          <span class="log-cat">${e.category}</span>
+        </div>
+        <div class="log-meta">
+          <span class="log-time">${new Date(e.ts).toLocaleTimeString('en-SG',{hour:'2-digit',minute:'2-digit'})}</span>
+          <span class="log-pts">+${e.pts}</span>
+        </div>
+      </div>`).join('');
+  }
+}
+
+// ── RENDER WEEKLY ─────────────────────────────────────────────────────────────
+function renderWeeklyPage() {
+  const ws = getWeekStart();
+  const we = new Date(ws); we.setDate(ws.getDate()+6);
+  document.getElementById('weekLabel').textContent = `${fmtDate(ws)} – ${fmtDate(we)}`;
+
+  const weekEntries = state.entries.filter(e => isThisWeek(e.ts));
+  const total = weekEntries.reduce((s,e) => s+e.pts, 0);
+  const cats  = catTotals(weekEntries);
+  const cls   = scoreClass(total, WEEKLY_MID, WEEKLY_HIGH);
+  const lbl   = scoreLabel(total, WEEKLY_MID, WEEKLY_HIGH);
+
+  document.getElementById('weeklyScore').className   = `week-summary-score ${cls}`;
+  document.getElementById('weeklyScore').textContent = total;
+  document.getElementById('weeklyPill').className    = `status-pill ${cls}`;
+  document.getElementById('weeklyPill').textContent  = lbl;
+  document.getElementById('weeklyFill').className    = `progress-fill ${cls}`;
+  document.getElementById('weeklyFill').style.width  = Math.min(100,(total/WEEKLY_MAX)*100)+'%';
+
+  document.getElementById('wSales').textContent    = cats.Sales;
+  document.getElementById('wStrategy').textContent = cats.Strategy;
+  document.getElementById('wDelivery').textContent = cats.Delivery;
+  document.getElementById('wContent').textContent  = cats.Content;
+  document.getElementById('wOps').textContent      = cats.Ops;
+
+  // Daily breakdown rows
+  const list = document.getElementById('dailyBreakdownList');
+  let html = '';
+  for (let i = 0; i < 7; i++) {
+    const d = new Date(ws); d.setDate(ws.getDate()+i);
+    const dayEntries = state.entries.filter(e => isSameDay(e.ts, d));
+    const dayTotal   = dayEntries.reduce((s,e) => s+e.pts, 0);
+    const dayCls     = dayTotal === 0 ? 'zero' : scoreClass(dayTotal, DAILY_MID, DAILY_HIGH);
+    const barCls     = dayTotal === 0 ? 'coasting' : dayCls;
+    const barW       = Math.min(100,(dayTotal/DAILY_MAX)*100);
+    const isT        = d.toDateString() === new Date().toDateString();
+    html += `<div class="daily-row">
+      <div class="daily-row-left">
+        <span class="daily-day">${DAYS[i]}${isT ? ' · today' : ''}</span>
+        <span class="daily-actions-count">${dayEntries.length} action${dayEntries.length !== 1 ? 's' : ''}</span>
+      </div>
+      <div class="daily-right">
+        <div class="daily-bar-wrap">
+          <div class="daily-bar ${barCls}" style="width:${barW}%"></div>
+        </div>
+        <span class="daily-score ${dayCls}">${dayTotal || '–'}</span>
+      </div>
+    </div>`;
+  }
+  list.innerHTML = html;
+}
+
+// ── LOG ACTION ────────────────────────────────────────────────────────────────
+async function logAction(index) {
+  const a = ACTIONS[index];
+  const entry = { id: Date.now(), name: a.name, category: a.category, pts: a.pts, ts: new Date().toISOString() };
+  state.entries.push(entry);
+  saveToStorage();
+  renderDailyPage();
+  renderWeeklyPage();
+
+  const btn = document.getElementById(`abtn-${index}`);
+  btn.classList.add('flash');
+  setTimeout(() => btn.classList.remove('flash'), 350);
+  showToast(`+${a.pts} · ${a.name}`);
+
+  if (state.notionApiKey && state.scoreLogDbId) await syncToNotion(entry);
+}
+
+// ── NOTION SYNC ───────────────────────────────────────────────────────────────
+async function syncToNotion(entry) {
+  setNotionStatus('syncing','syncing...');
+  const today     = new Date(entry.ts).toISOString().split('T')[0];
+  const weekStart = getWeekStart().toISOString().split('T')[0];
+  const weekRowId = await findOrCreateWeekRow(weekStart);
+
+  const body = {
+    parent: { database_id: state.scoreLogDbId },
+    properties: {
+      Action:       { title: [{ text: { content: entry.name } }] },
+      Category:     { select: { name: entry.category } },
+      Points:       { number: entry.pts },
+      Date:         { date: { start: today } },
+      "Week Start": { date: { start: weekStart } },
+      ...(weekRowId ? { Week: { relation: [{ id: weekRowId }] } } : {})
+    }
+  };
+  try {
+    const res = await fetch('https://api.notion.com/v1/pages', {
+      method: 'POST',
+      headers: { 'Authorization':`Bearer ${state.notionApiKey}`, 'Content-Type':'application/json', 'Notion-Version':'2022-06-28' },
+      body: JSON.stringify(body),
+    });
+    if (res.ok) {
+      setNotionStatus('synced','synced ✓');
+      setTimeout(() => setNotionStatus('','— connected to Notion —'), 3000);
+    } else {
+      const err = await res.json();
+      setNotionStatus('error',`error: ${err.message || res.status}`);
+    }
+  } catch(e) { setNotionStatus('error','network error'); }
+}
+
+async function findOrCreateWeekRow(weekStart) {
+  if (!state.summaryDbId) return null;
+  try {
+    const res = await fetch(`https://api.notion.com/v1/databases/${state.summaryDbId}/query`, {
+      method:'POST',
+      headers:{ 'Authorization':`Bearer ${state.notionApiKey}`, 'Content-Type':'application/json', 'Notion-Version':'2022-06-28' },
+      body: JSON.stringify({ filter:{ property:"Week Start", date:{ equals: weekStart } } }),
+    });
+    const data = await res.json();
+    if (data.results?.length > 0) return data.results[0].id;
+    const label = `W/C ${new Date(weekStart+'T00:00:00').toLocaleDateString('en-SG',{day:'numeric',month:'short',year:'numeric'})}`;
+    const cr = await fetch('https://api.notion.com/v1/pages', {
+      method:'POST',
+      headers:{ 'Authorization':`Bearer ${state.notionApiKey}`, 'Content-Type':'application/json', 'Notion-Version':'2022-06-28' },
+      body: JSON.stringify({ parent:{ database_id: state.summaryDbId }, properties:{
+        Week:{ title:[{ text:{ content: label } }] },
+        "Week Start":{ date:{ start: weekStart } },
+        Status:{ select:{ name:"🔴 Coasting" } },
+      }}),
+    });
+    const created = await cr.json();
+    return created.id || null;
+  } catch(e) { return null; }
+}
+
+// ── UI HELPERS ────────────────────────────────────────────────────────────────
+function switchTab(tab) {
+  document.querySelectorAll('.tab').forEach((t,i) => {
+    const tabs = ['daily','weekly','settings'];
+    t.classList.toggle('active', tabs[i] === tab);
+  });
+  document.querySelectorAll('.page').forEach(p => {
+    p.classList.toggle('active', p.id === `page-${tab}`);
+  });
+  if (tab === 'weekly') renderWeeklyPage();
+}
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2200);
+}
+function setNotionStatus(type, msg) {
+  const el = document.getElementById('notionStatus');
+  el.className = `notion-status ${type}`;
+  el.textContent = msg;
+}
+function saveConfig() {
+  state.notionApiKey = document.getElementById('apiKeyInput').value.trim();
+  state.scoreLogDbId = document.getElementById('dbIdInput').value.trim();
+  state.summaryDbId  = document.getElementById('summaryDbIdInput').value.trim();
+  saveToStorage();
+  setNotionStatus('synced','config saved ✓');
+  setTimeout(() => setNotionStatus('','— connected to Notion —'), 2000);
+}
+
+init();
+</script>
+</body>
+</html>
