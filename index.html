@@ -726,11 +726,22 @@ function prefillConfig() {
 
 // ── DATE UTILS ────────────────────────────────────────────────────────────────
 function getWeekStart(d = new Date()) {
-  const date = new Date(d);
-  const day = date.getDay();
-  date.setDate(date.getDate() - (day === 0 ? 6 : day - 1));
-  date.setHours(0,0,0,0);
-  return date;
+  // Always work in local time to avoid UTC/SGT rollover
+  let dateStr;
+  if (typeof d === 'string' && d.length === 10) {
+    dateStr = d; // already YYYY-MM-DD
+  } else {
+    const ld = new Date(d);
+    const y = ld.getFullYear();
+    const m = String(ld.getMonth()+1).padStart(2,'0');
+    const day2 = String(ld.getDate()).padStart(2,'0');
+    dateStr = `${y}-${m}-${day2}`;
+  }
+  const [y, m, dd] = dateStr.split('-').map(Number);
+  const tmp = new Date(y, m-1, dd); // local midnight, no timezone shift
+  const dow = tmp.getDay(); // 0=Sun,1=Mon,...
+  tmp.setDate(tmp.getDate() - (dow === 0 ? 6 : dow - 1));
+  return tmp;
 }
 function isThisWeek(iso) {
   const ws = getWeekStart(), we = new Date(ws);
@@ -913,8 +924,10 @@ async function logAction(index) {
 // ── NOTION SYNC ───────────────────────────────────────────────────────────────
 async function syncToNotion(entry) {
   setNotionStatus('syncing','syncing...');
-  const today     = new Date(entry.ts).toISOString().split('T')[0];
-  const weekStart = getWeekStart(new Date(entry.ts)).toISOString().split('T')[0];
+  // Use local date to avoid UTC rollover (SGT = UTC+8)
+  const _ets = new Date(entry.ts);
+  const today = `${_ets.getFullYear()}-${String(_ets.getMonth()+1).padStart(2,'0')}-${String(_ets.getDate()).padStart(2,'0')}`;
+  const weekStart = getWeekStart(today).toISOString().split('T')[0];
   const weekRowId = await findOrCreateWeekRow(weekStart);
 
   const body = {
