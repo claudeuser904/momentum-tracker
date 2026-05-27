@@ -904,7 +904,7 @@ async function findOrCreateWeekRow(weekStart) {
     });
     const data = await res.json();
     if (data.results?.length > 0) return data.results[0].id;
-    const label = `W/C ${new Date(weekStart+'T00:00:00').toLocaleDateString('en-SG',{day:'numeric',month:'short',year:'numeric'})}`;
+    const label = `W/C ${new Date(weekStart+'T12:00:00').toLocaleDateString('en-SG',{day:'numeric',month:'short',year:'numeric'})}`;
     const cr = await fetch('https://wild-water-9953notion-proxy.natalie-151.workers.dev/v1/pages', {
       method:'POST',
       headers:{ 'Authorization':`Bearer ${state.notionApiKey}`, 'Content-Type':'application/json', 'Notion-Version':'2022-06-28' },
