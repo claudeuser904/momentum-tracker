@@ -454,6 +454,47 @@
     letter-spacing: 0.02em;
   }
   .toast.show { transform: translateX(-50%) translateY(0); }
+
+  /* ── DATE PICKER ── */
+  .date-picker-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 20px 4px;
+  }
+  .date-picker-label {
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--muted);
+    white-space: nowrap;
+  }
+  .date-picker-input {
+    font-family: 'DM Mono', monospace;
+    font-size: 12px;
+    color: var(--charcoal);
+    background: transparent;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 5px 8px;
+    cursor: pointer;
+    outline: none;
+  }
+  .date-picker-input:focus { border-color: var(--dark-green); }
+  .date-today-btn {
+    font-size: 11px;
+    color: var(--muted);
+    background: none;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 5px 8px;
+    cursor: pointer;
+    font-family: 'DM Sans', sans-serif;
+    white-space: nowrap;
+  }
+  .date-today-btn:hover { color: var(--dark-green); border-color: var(--dark-green); }
+
 </style>
 </head>
 <body>
@@ -517,6 +558,11 @@
     </div>
   </div>
 
+  <div class="date-picker-row">
+    <span class="date-picker-label">Logging for</span>
+    <input type="date" class="date-picker-input" id="logDatePicker" />
+    <button class="date-today-btn" onclick="resetLogDate()">Today</button>
+  </div>
   <div class="divider"></div>
   <div class="section-label">Log an action</div>
   <div id="actionsGrid"></div>
@@ -659,6 +705,7 @@ function init() {
   renderActions();
   renderDailyPage();
   renderWeeklyPage();
+  initLogDatePicker();
   prefillConfig();
 }
 
@@ -846,7 +893,10 @@ function renderWeeklyPage() {
 // ── LOG ACTION ────────────────────────────────────────────────────────────────
 async function logAction(index) {
   const a = ACTIONS[index];
-  const entry = { id: Date.now(), name: a.name, category: a.category, pts: a.pts, ts: new Date().toISOString() };
+  const logDateInput = document.getElementById('logDatePicker');
+  const selectedDate = logDateInput && logDateInput.value ? logDateInput.value : null;
+  const entryTs = selectedDate ? new Date(selectedDate + 'T12:00:00').toISOString() : new Date().toISOString();
+  const entry = { id: Date.now(), name: a.name, category: a.category, pts: a.pts, ts: entryTs };
   state.entries.push(entry);
   saveToStorage();
   renderDailyPage();
@@ -864,7 +914,7 @@ async function logAction(index) {
 async function syncToNotion(entry) {
   setNotionStatus('syncing','syncing...');
   const today     = new Date(entry.ts).toISOString().split('T')[0];
-  const weekStart = getWeekStart().toISOString().split('T')[0];
+  const weekStart = getWeekStart(new Date(entry.ts)).toISOString().split('T')[0];
   const weekRowId = await findOrCreateWeekRow(weekStart);
 
   const body = {
@@ -952,6 +1002,20 @@ function saveConfig() {
 }
 
 init();
+
+function initLogDatePicker() {
+  const picker = document.getElementById('logDatePicker');
+  if (picker) {
+    const today = new Date().toISOString().split('T')[0];
+    picker.value = today;
+    picker.max = today;
+  }
+}
+function resetLogDate() {
+  const picker = document.getElementById('logDatePicker');
+  if (picker) picker.value = new Date().toISOString().split('T')[0];
+}
+
 </script>
 </body>
 </html>
